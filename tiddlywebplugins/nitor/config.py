@@ -27,4 +27,7 @@ config = {
     'cookie_age': '2592000',  # 1 month
     'server_store': ['tiddlywebplugins.mysql3', {
         'db_config': 'mysql:///nitor?charset=utf8&use_unicode=0'}],
-    'indexer': 'tiddlywebplugins.mysql3'}
+    'indexer': 'tiddlywebplugins.mysql3',
+    'wikitext.type_render_map' :{
+        'text/x-markdown': 'tiddlywebplugins.markdown'},
+    'wikitext.default_renderer': 'tiddlywebplugins.markdown'}

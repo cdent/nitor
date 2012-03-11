@@ -1,3 +1,4 @@
+.PHONY: test remotes dev clean
 
 clean:
 	find . -name "*.pyc" | xargs rm || true
@@ -27,3 +28,6 @@ dev_local:
 remotes:
 	curl -Lo src/externals/jquery.js.js https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js
 	./cacher
+
+test:
+	py.test -x test

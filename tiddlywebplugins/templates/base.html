@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ title }}</title>
+        <link rel="stylesheet" href="/bags/common/tiddlers/base.css"
+            type="text/css" />
+        {%- for link in css -%}
+        <link rel="stylesheet" href="{{ link }}" type="text/css" />
+        {%- endfor -%}
+        {% block links %}
+        {% endblock %}
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+        <meta name="title" content="{{ title|e }}" /> 
+        <meta name="viewport" content="width=device-width"> 
+    </head>
+    <body>
+        <div id="container">
+          {% block content %}
+          {% endblock %}
+        </div>
+    </body>
+        {%- for link in js -%}
+        <script type="text/javascript" src="{{ link }}"></script>
+        {%- endfor -%}
+</html>
