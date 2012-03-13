@@ -1,9 +1,15 @@
 html {
     background: black;
+    height: 100%
 }
 
 body {
     background: white;
+    padding: 1em;
     width: 75%;
-    margin: 1em, auto, 1em, auto;
+    margin-top: 1em;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1em;
+    min-height: 100%
 }

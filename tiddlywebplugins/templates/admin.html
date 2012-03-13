@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<ul>
+{% for gym in gyms %}
+<li><a href="admin/{{ gym.title | uri }}">{{ gym.title | e }}</a>: {{ gym.fields.fullname|e }}</li>
+{% endfor %}
+</ul>
+{% endblock %}

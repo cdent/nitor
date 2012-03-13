@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<form method="POST">
+    <label>Full Name: <input size="80" type="text" name="fullname"
+        value="{{gym_tiddler.fields.fullname | e}}"></label><br>
+    <label>Tag Line: <input size="80" type="text" name="tagline"
+        value="{{gym_tiddler.fields.tagline |e}}"></label><br>
+    Location <label>lat <input size="10" type="text" name="geo.lat"
+        value="{{gym_tiddler.fields['geo.lat']|e}}"></label>,
+        <label>long <input size="10" type="text" name="geo.long"
+        value="{{gym_tiddler.fields['geo.long']|e}}"></label><br>
+    <input type="submit" name="submit" value="EditInfo">
+</form>
+<form method="POST">
+    <table>
+        <tr><th>line</th><th>color</th><th>rating</th></tr>
+    {% for route in routes %}
+        <tr><td>{{ route.fields.line }}</td>
+            <td>{{ route.fields.color }}</td>
+            <td>{{ route.fields.rating }}</td></tr>
+    {% endfor %}
+    <tr><td><input name="line" size="3"></td>
+        <td><input name="color" size="10"></td>
+        <td><input name="rating" size="5"></td></tr>
+    </table>
+    <input type="submit" name="submit" value="AddRoute">
+</form>
+{% endblock %}

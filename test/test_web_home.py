@@ -21,3 +21,10 @@ def test_home_handler():
     assert response['status'] == '200', content
     assert 'Welcome to Nitor' in content
     assert '/bags/common/tiddlers/base.css' in content
+
+def test_admin_handler():
+    response, content = http.request('http://nitor.org:8080/admin')
+
+    assert response['status'] == '200', content
+    assert 'href="testgym"' in content
+    assert 'A debugging test gym.' in content
