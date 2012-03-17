@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Welcome to {{ gym.fields.fullname | e }}</h1>
+<p>{{ gym.fields.tagline }}</p>
+<p><a href="/gyms/{{ gym.title|uri}}/routes">Routes</a></p>
+{% if gym.fields['geo.lat'] and gym.fields['geo.long'] %}
+<div id="mapdiv" style="width:500px;height:500px;border:thin solid black"></div>
+<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+<script>
+    map = new OpenLayers.Map("mapdiv");
+    map.addLayer(new OpenLayers.Layer.OSM());
+
+    var lonLat = new OpenLayers.LonLat( {{gym.fields['geo.long']}}, {{gym.fields['geo.lat']}} )
+        // transform from WGS 1984
+        .transform(new OpenLayers.Projection("EPSG:4326"),
+        // to Spherical Mercator Projection
+        map.getProjectionObject()
+    );
+
+    var zoom=14;
+
+    var markers = new OpenLayers.Layer.Markers( "Markers" );
+    map.addLayer(markers);
+
+    markers.addMarker(new OpenLayers.Marker(lonLat));
+
+    map.setCenter (lonLat, zoom);
+</script>
+{% endif %}
+{% endblock %}

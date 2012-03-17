@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<table>
+    <tr><th>line</th><th>color</th><th>grade</th><th>setter</th><th>lead?</th></tr>
+    {% for route in routes|sort(attribute='fields.lineNumber') %}
+    <tr>
+        <td>{{ route.fields.lineNumber }}</td>
+        <td>{{ route.fields.colorName }}</td>
+        <td>{{ route.fields.grade }}</td>
+        <td>{{ route.fields.routeSetter }}</td>
+        <td>{% if route.fields.isLeadRoute %} X {% endif %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -37,7 +37,9 @@ LEAD_FIELD = 'isLeadRoute'
 
 @do_html()
 def home(environ, start_response):
-    return send_template(environ, 'home.html', { 'title': 'Welcome to Nitor'})
+    kept_bags, fullnames = get_gyms(environ, 'read')
+    return send_template(environ, 'home.html', { 'gyms': kept_bags,
+        'fullnames': fullnames, 'title': 'Welcome to Nitor'})
 
 
 #@require_role('ADMIN)
@@ -97,16 +99,21 @@ def _update_gym_info(environ, tiddler):
     except StoreError, exc:
         raise HTTP400('Unable to save gym: %s' % exc)
 
-#@require_role('MANAGER')
-@do_html()
-def manager(environ, start_response):
+def get_gyms(environ, constraint):
+    """
+    Get the list of bags and fullnames that match
+    the contraint for the provided usersign.
+    """
     store = environ['tiddlyweb.store']
+    usersign = environ['tiddlyweb.usersign']
     bags = (store.get(bag) for bag in store.list_bags())
     kept_bags = []
     fullnames = {}
     for bag in sorted(bags, key=attrgetter('name')):
+        if bag.name in RESERVED_BAGS:
+            continue
         try:
-            bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
+            bag.policy.allows(usersign, constraint)
             if not bag.name.endswith('_archive'):
                 kept_bags.append(bag)
             try:
@@ -116,7 +123,12 @@ def manager(environ, start_response):
                 pass
         except PermissionsError:
             pass
+    return kept_bags, fullnames
 
+#@require_role('MANAGER')
+@do_html()
+def manager(environ, start_response):
+    kept_bags, fullnames = get_gyms(environ, 'manage')
     return send_template(environ, 'manage_list.html', {'gyms': kept_bags,
         'title': 'Your Gyms', 'fullnames': fullnames})
 
@@ -131,6 +143,17 @@ def manage_gym(environ, start_response):
     gym_bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
     gym_tiddler = store.get(Tiddler(gym, GYMS_BAG))
 
+    routes = _get_gym_routes(environ, gym)
+
+    return send_template(environ, 'manage_gym.html', {
+        'title': 'Manage %s' % gym,
+        'gym_tiddler': gym_tiddler,
+        'routes': routes})
+
+def _get_gym_routes(environ, gym_name):
+    store = environ['tiddlyweb.store']
+    gym_bag = Bag(gym_name)
+
     def _get_and_mangle_tiddler(tiddler):
         store.get(tiddler)
         try:
@@ -139,14 +162,10 @@ def manage_gym(environ, start_response):
             pass  # don't worry
         return tiddler
 
-    routes = [_get_and_mangle_tiddler(tiddler) for tiddler in filter_tiddlers(
+    return [_get_and_mangle_tiddler(tiddler) for tiddler in filter_tiddlers(
         store.list_bag_tiddlers(gym_bag),
         'select=tag:route', environ)]
 
-    return send_template(environ, 'manage_gym.html', {
-        'title': 'Manage %s' % gym,
-        'gym_tiddler': gym_tiddler,
-        'routes': routes})
 
 #@require_role('MANAGER')
 @do_html()
@@ -228,6 +247,32 @@ def _manage_update_gym(environ, gym):
 
     raise HTTP303(server_base_url(environ) + '/manager/%s' % gym)
 
+@do_html()
+def gym_info(environ, start_response):
+    """
+    Display the info about a single gym for the public.
+    """
+    store = environ['tiddlyweb.store']
+    gym = get_route_value(environ, 'gym')
+    try:
+        gym_tiddler = store.get(Tiddler(gym, GYMS_BAG))
+    except StoreError, exc:
+        raise HTTP404('that gym does not exist: %s' % exc)
+    return send_template(environ, 'gym.html', { 'gym': gym_tiddler,
+        'title': gym})
+
+
+@do_html()
+def gym_routes(environ, start_response):
+    """
+    Display the routes from a single gym.
+    """
+    gym = get_route_value(environ, 'gym')
+    routes = _get_gym_routes(environ, gym)
+    return send_template(environ, 'gym_routes.html', {
+        'title': 'Routes @%s' % gym,
+        'routes': routes})
+
 
 def establish_handlers(config):
     selector = config['selector']
@@ -236,6 +281,8 @@ def establish_handlers(config):
     selector.add('/admin/{gym:segment}', GET=gym_editor, POST=gym_edit)
     selector.add('/manager', GET=manager)
     selector.add('/manager/{gym:segment}', GET=manage_gym, POST=manage_edit)
+    selector.add('/gyms/{gym:segment}', GET=gym_info)
+    selector.add('/gyms/{gym:segment}/routes', GET=gym_routes)
 
 
 def create_gym_bag(environ, bag_name):
