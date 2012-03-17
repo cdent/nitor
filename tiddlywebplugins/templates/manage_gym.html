@@ -13,16 +13,41 @@
 </form>
 <form method="POST">
     <table>
-        <tr><th>line</th><th>color</th><th>rating</th></tr>
-    {% for route in routes %}
-        <tr><td>{{ route.fields.line }}</td>
-            <td>{{ route.fields.color }}</td>
-            <td>{{ route.fields.rating }}</td></tr>
+        <tr><th>delete?</th><th>line</th><th>color</th><th>grade</th><th>setter</th><th>lead?</th></tr>
+    {% for route in routes|sort(attribute='fields.lineNumber') %}
+    <tr>
+        <td>
+            <input name="delete" type="checkbox" value="{{ route.title }}">
+        </td>
+        <td>
+            <input name="title" type="hidden" value="{{ route.title }}"/>
+            <input name="lineNumber" size="3" value="{{ route.fields.lineNumber }}"/>
+        </td>
+        <td>
+            <input name="colorName" size="10" value="{{ route.fields.colorName }}"/>
+        </td>
+        <td>
+            <input name="grade" size="5" value="{{ route.fields.grade }}"/>
+        </td>
+        <td>
+            <input name="routeSetter" size="20" value="{{ route.fields.routeSetter}}"/>
+        </td>
+        <td>
+            <input name="isLeadRoute" type="checkbox" value="{{ route.title }}"
+            {%- if route.fields.isLeadRoute -%} checked="checked"{%- endif %}
+            />
+        </td>
+    </tr>
     {% endfor %}
-    <tr><td><input name="line" size="3"></td>
-        <td><input name="color" size="10"></td>
-        <td><input name="rating" size="5"></td></tr>
+    <tr><td></td><td><input name="lineNumber" size="3"></td>
+        <td><input name="colorName" size="10"></td>
+        <td><input name="grade" size="5"></td>
+        <td><input name="routeSetter" size="20"></td>
+        <td><input name="isLeadRoute" type="checkbox"
+            value="new_one" checked="checked" /></td>
+    </tr>
+
     </table>
-    <input type="submit" name="submit" value="AddRoute">
+    <input type="submit" name="submit" value="Update Routes">
 </form>
 {% endblock %}

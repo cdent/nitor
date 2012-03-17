@@ -31,6 +31,8 @@ __version__ = '0.0.1'
 GYMS_BAG = 'gyms'
 CLIMBTYPES = 'climbtypes'
 RESERVED_BAGS = [GYMS_BAG, 'common', CLIMBTYPES]
+ROUTE_FIELDS = ['lineNumber', 'colorName', 'grade', 'routeSetter']
+LEAD_FIELD = 'isLeadRoute'
 
 
 @do_html()
@@ -128,9 +130,17 @@ def manage_gym(environ, start_response):
     gym_bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
     gym_tiddler = store.get(Tiddler(gym, GYMS_BAG))
 
-    routes = [store.get(tiddler) for tiddler in filter_tiddlers(
+    def _get_and_mangle_tiddler(tiddler):
+        store.get(tiddler)
+        try:
+            tiddler.fields['lineNumber'] = int(tiddler.fields['lineNumber'])
+        except ValueError:
+            pass  # don't worry
+        return tiddler
+
+    routes = [_get_and_mangle_tiddler(tiddler) for tiddler in filter_tiddlers(
         store.list_bag_tiddlers(gym_bag),
-        'select=tag:route;sort=line', environ)]
+        'select=tag:route', environ)]
 
     return send_template(environ, 'manage_gym.html', {
         'title': 'Manage %s' % gym,
@@ -148,7 +158,7 @@ def manage_edit(environ, start_response):
 
     query = environ['tiddlyweb.query']
 
-    if query.get('submit', [''])[0] == 'AddRoute':
+    if query.get('submit', [''])[0] == 'Update Routes':
         return _manage_update_routes(environ, gym)
     else:
         return _manage_update_gym(environ, gym)
@@ -156,13 +166,55 @@ def manage_edit(environ, start_response):
 def _manage_update_routes(environ, gym):
     store = environ['tiddlyweb.store']
     query = environ['tiddlyweb.query']
-    title = str(uuid4())
+    existing_titles = query.get('title', [])
+    count = len(existing_titles)
+    index = 0
+    delete = query.get('delete', [])
+    lead_route = query.get(LEAD_FIELD, [])
+    while index < count:
+        title = existing_titles[index]
+        tiddler = Tiddler(title, gym)
+        try:
+            if title in delete:
+                store.delete(tiddler)
+                index += 1
+                continue
+            tiddler = store.get(tiddler)
+        except StoreError:
+            pass
+        changed = False
+        for key in ROUTE_FIELDS:
+            value = query.get(key, [''])[index]
+            if tiddler.fields[key] != value:
+                tiddler.fields[key] = value
+                changed = True
+        if LEAD_FIELD in tiddler.fields and title not in lead_route:
+            del tiddler.fields[LEAD_FIELD]
+            changed = True
+        elif title in lead_route and LEAD_FIELD not in tiddler.fields:
+            tiddler.fields[LEAD_FIELD] = '1'
+            changed = True
+        if changed:
+            store.put(tiddler)
+        index += 1
+    
+    try:
+        title = query.get('title', [])[index]
+    except IndexError:
+        title = str(uuid4())
     tiddler = Tiddler(title, gym)
-    for key in ['line', 'color', 'rating']:
-        value = query.get(key, [''])[0]
+    new_route = False
+    if 'new_one' in lead_route:
+        tiddler.fields[LEAD_FIELD] = '1'
+    for key in ROUTE_FIELDS:
+        value = query.get(key, [''])[index]
+        if value == '':
+            continue
+        new_route = True
         tiddler.fields[key] = value
     tiddler.tags = ['route']
-    store.put(tiddler)
+    if new_route:
+        store.put(tiddler)
     raise HTTP303(server_base_url(environ) + '/manager/%s' % gym)
 
 def _manage_update_gym(environ, gym):
