@@ -107,7 +107,8 @@ def manager(environ, start_response):
     for bag in sorted(bags, key=attrgetter('name')):
         try:
             bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
-            kept_bags.append(bag)
+            if not bag.name.endswith('_archive'):
+                kept_bags.append(bag)
             try:
                 tiddler = store.get(Tiddler(bag.name, GYMS_BAG))
                 fullnames[bag.name] = tiddler.fields['fullname']
@@ -175,11 +176,15 @@ def _manage_update_routes(environ, gym):
         title = existing_titles[index]
         tiddler = Tiddler(title, gym)
         try:
+            tiddler = store.get(tiddler)
             if title in delete:
+                original_bag = tiddler.bag
+                tiddler.bag = '%s_archive' % gym
+                store.put(tiddler)
+                tiddler.bag = original_bag
                 store.delete(tiddler)
                 index += 1
                 continue
-            tiddler = store.get(tiddler)
         except StoreError:
             pass
         changed = False
@@ -236,9 +241,11 @@ def establish_handlers(config):
 def create_gym_bag(environ, bag_name):
     store = environ['tiddlyweb.store']
     bag = Bag(bag_name)
+    archive_bag = Bag('%s_archive' % bag_name)
     # TODO Set policy appropriately
     #bag.policy.manage ....
     store.put(bag)
+    store.put(archive_bag)
 
 
 def init(config):
