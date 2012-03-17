@@ -19,6 +19,7 @@ from tiddlyweb.store import StoreError
 from tiddlyweb.util import merge_config
 from tiddlyweb.web.http import HTTP303, HTTP400
 from tiddlyweb.web.util import get_route_value, server_base_url
+from tiddlyweb.wikitext import render_wikitext
 
 from tiddlywebplugins.utils import replace_handler, do_html, require_role
 from tiddlywebplugins.nitor.config import config as plugin_config
@@ -33,6 +34,7 @@ CLIMBTYPES = 'climbtypes'
 RESERVED_BAGS = [GYMS_BAG, 'common', CLIMBTYPES]
 ROUTE_FIELDS = ['lineNumber', 'colorName', 'grade', 'routeSetter']
 LEAD_FIELD = 'isLeadRoute'
+TIDDLER_TYPE = 'text/x-markdown'
 
 
 @do_html()
@@ -110,12 +112,11 @@ def get_gyms(environ, constraint):
     kept_bags = []
     fullnames = {}
     for bag in sorted(bags, key=attrgetter('name')):
-        if bag.name in RESERVED_BAGS:
+        if not bag.name.endswith('_climbs'):
             continue
         try:
             bag.policy.allows(usersign, constraint)
-            if not bag.name.endswith('_archive'):
-                kept_bags.append(bag)
+            kept_bags.append(bag)
             try:
                 tiddler = store.get(Tiddler(bag.name, GYMS_BAG))
                 fullnames[bag.name] = tiddler.fields['fullname']
@@ -138,21 +139,34 @@ def manager(environ, start_response):
 def manage_gym(environ, start_response):
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
-    gym_bag = store.get(Bag(gym))
+    routes_bag = store.get(Bag('%s_climbs' % gym))
+    news_bag = Bag('%s_news' % gym)
     # Bail out if we are not allowed to manage. 
-    gym_bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
+    routes_bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
     gym_tiddler = store.get(Tiddler(gym, GYMS_BAG))
+
+    try:
+        latest_news = [tiddler for tiddler in filter_tiddlers(
+            store.list_bag_tiddlers(news_bag),
+            'sort=-modified;limit=1', environ)][0]
+        latest_news = store.get(latest_news)
+        news_html = render_wikitext(latest_news, environ)
+        latest_news.fields['html'] = news_html
+    except IndexError:
+        latest_news = Tiddler('tmp')
+        latest_news.fields['html'] = '<p>No News</p>'
 
     routes = _get_gym_routes(environ, gym)
 
     return send_template(environ, 'manage_gym.html', {
         'title': 'Manage %s' % gym,
         'gym_tiddler': gym_tiddler,
+        'latest_news': latest_news,
         'routes': routes})
 
 def _get_gym_routes(environ, gym_name):
     store = environ['tiddlyweb.store']
-    gym_bag = Bag(gym_name)
+    gym_bag = Bag('%s_climbs' % gym_name)
 
     def _get_and_mangle_tiddler(tiddler):
         store.get(tiddler)
@@ -172,16 +186,27 @@ def _get_gym_routes(environ, gym_name):
 def manage_edit(environ, start_response):
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
-    gym_bag = store.get(Bag(gym))
+    gym_bag = store.get(Bag('%s_climbs' % gym))
     # Bail out if we are not allowed to manage. 
     gym_bag.policy.allows(environ['tiddlyweb.usersign'], 'manage')
 
-    query = environ['tiddlyweb.query']
+    submit = environ['tiddlyweb.query'].get('submit', [''])[0]
 
-    if query.get('submit', [''])[0] == 'Update Routes':
+    if submit == 'Update Routes':
         return _manage_update_routes(environ, gym)
+    elif submit == 'Create News':
+        return _manage_create_news(environ, gym)
     else:
         return _manage_update_gym(environ, gym)
+
+def _manage_create_news(environ, gym):
+    store = environ['tiddlyweb.store']
+    news = environ['tiddlyweb.query'].get('news', [''])[0]
+    tiddler = Tiddler(str(uuid4()), '%s_news' % gym)
+    tiddler.text = news
+    tiddler.type = TIDDLER_TYPE
+    store.put(tiddler)
+    raise HTTP303(server_base_url(environ) + '/manager/%s' % gym)
 
 def _manage_update_routes(environ, gym):
     store = environ['tiddlyweb.store']
@@ -193,7 +218,7 @@ def _manage_update_routes(environ, gym):
     lead_route = query.get(LEAD_FIELD, [])
     while index < count:
         title = existing_titles[index]
-        tiddler = Tiddler(title, gym)
+        tiddler = Tiddler(title, '%s_climbs' % gym)
         try:
             tiddler = store.get(tiddler)
             if title in delete:
@@ -226,7 +251,7 @@ def _manage_update_routes(environ, gym):
         title = query.get('title', [])[index]
     except IndexError:
         title = str(uuid4())
-    tiddler = Tiddler(title, gym)
+    tiddler = Tiddler(title, '%s_climbs' % gym)
     new_route = False
     if 'new_one' in lead_route:
         tiddler.fields[LEAD_FIELD] = '1'
@@ -254,12 +279,25 @@ def gym_info(environ, start_response):
     """
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
+    news_tiddlers = []
     try:
         gym_tiddler = store.get(Tiddler(gym, GYMS_BAG))
+        news_bag = Bag('%s_news' % gym)
+        latest_news = [tiddler for tiddler in filter_tiddlers(
+            store.list_bag_tiddlers(news_bag),
+            'sort=-created;limit=10', environ)]
+        for tiddler in latest_news:
+            tiddler = store.get(tiddler)
+            news_html = render_wikitext(tiddler, environ)
+            tiddler.fields['html'] = news_html
+            news_tiddlers.append(tiddler)
+
     except StoreError, exc:
         raise HTTP404('that gym does not exist: %s' % exc)
-    return send_template(environ, 'gym.html', { 'gym': gym_tiddler,
-        'title': gym})
+    return send_template(environ, 'gym.html', {
+        'gym': gym_tiddler,
+        'title': gym,
+        'news_tiddlers': news_tiddlers})
 
 
 @do_html()

@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
+<div id="gyminfo">
+    <h1>Manage Gym Info</h1>
 <form method="POST">
     <label>Full Name: <input size="80" type="text" name="fullname"
         value="{{gym_tiddler.fields.fullname | e}}"></label><br>
@@ -11,6 +13,9 @@
         value="{{gym_tiddler.fields['geo.long']|e}}"></label><br>
     <input type="submit" name="submit" value="EditInfo">
 </form>
+</div>
+<div id="gymroutes">
+    <h1>Manage Gym Routes</h1>
 <form method="POST">
     <table>
         <tr><th>delete?</th><th>line</th><th>color</th><th>grade</th><th>setter</th><th>lead?</th></tr>
@@ -50,4 +55,18 @@
     </table>
     <input type="submit" name="submit" value="Update Routes">
 </form>
+</div>
+<div id="gymnews">
+    <h1>Create Gym News</h1>
+    <form method="POST">
+        <textarea name="news" rows="12" cols="80"></textarea><br/>
+        <input type="submit" name="submit" value="Create News">
+    </form>
+</div>
+<div id="latest_news">
+    <p>{{ latest_news.created }}</p>
+    <div class="newsitem">
+        {{ latest_news.fields.html }}
+    </div>
+</div>
 {% endblock %}

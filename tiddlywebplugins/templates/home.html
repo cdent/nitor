@@ -3,7 +3,7 @@
 <h1>Welcome to Nitor</h1>
 <ul>
 {% for gym in gyms %}
-<li><a href="/gyms/{{ gym.name | uri }}">{{ gym.name | e }}</a>: {{ fullnames[gym.name]|e }}</li>
+<li><a href="/gyms/{{ gym.name | replace('_climbs', '') | uri }}">{{ gym.name | replace('_climbs', '') | e }}</a>: {{ fullnames[gym.name]|e }}</li>
 {% endfor %}
 </ul>
 {% endblock %}

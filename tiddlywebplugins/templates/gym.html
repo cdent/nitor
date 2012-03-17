@@ -3,6 +3,15 @@
 <h1>Welcome to {{ gym.fields.fullname | e }}</h1>
 <p>{{ gym.fields.tagline }}</p>
 <p><a href="/gyms/{{ gym.title|uri}}/routes">Routes</a></p>
+<div id="gymnews">
+    <h1>News</h1>
+    <ul>
+{% for tiddler in news_tiddlers %}
+<li><span class="created">{{ tiddler.created }}</span>:
+{{tiddler.fields.html}}</li>
+{% endfor %}
+    </ul>
+
 {% if gym.fields['geo.lat'] and gym.fields['geo.long'] %}
 <div id="mapdiv" style="width:500px;height:500px;border:thin solid black"></div>
 <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
