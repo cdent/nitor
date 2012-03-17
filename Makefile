@@ -26,6 +26,7 @@ dev_local:
 	@echo "INFO development instance created in dev_instance"
 
 remotes:
+	mkdir src/externals || true
 	curl -Lo src/externals/jquery.js.js https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js
 	./cacher
 
