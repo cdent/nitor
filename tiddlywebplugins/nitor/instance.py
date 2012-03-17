@@ -28,6 +28,7 @@ instance_config = {
         'twanager_plugins': ['tiddlywebplugins.nitor']}
 
 store_contents = {
+        'testgym': ['src/testdata.recipe'],
         'common': ['src/common.recipe'],
         'gyms': ['src/gyms.recipe'],
         'climbtypes': ['src/climbtypes.recipe']}
@@ -49,5 +50,9 @@ store_structure = {
             'MAGICUSER': {
                 'desc': 'maps extracted user credentials',
                 'policy': NONE_POLICY},
+            'testgym': {
+                'desc': 'debugging test gym'},
+            'testgym_archive': {
+                'desc': 'debugging test gym archvie'},
             }
         }
