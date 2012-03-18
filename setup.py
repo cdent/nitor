@@ -26,6 +26,7 @@ setup(
         'tiddlywebplugins.mysql3',
         'tiddlywebplugins.templates'
         'tiddlywebplugins.markdown',
+        'tiddlywebplugins.instancer',
         ],
     zip_safe = False
     )
