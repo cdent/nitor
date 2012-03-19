@@ -17,6 +17,7 @@ dev_local:
 	@mysqladmin create nitor
 	@PYTHONPATH="." ./nitor dev_instance
 	( cd dev_instance && \
+	    	ln -s ../src && \
 		ln -s ../devconfig.py && \
 		ln -s ../mangler.py && \
 		ln -s ../tiddlywebplugins && \

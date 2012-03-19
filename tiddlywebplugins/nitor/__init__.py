@@ -169,7 +169,8 @@ def _get_gym_routes(environ, gym_name):
     gym_bag = Bag('%s_climbs' % gym_name)
 
     def _get_and_mangle_tiddler(tiddler):
-        store.get(tiddler)
+        tiddler = store.get(tiddler)
+        print 'tt, tf', tiddler.title, tiddler.fields
         try:
             tiddler.fields['lineNumber'] = int(tiddler.fields['lineNumber'])
         except ValueError:
