@@ -56,5 +56,7 @@ store_structure = {
                 'desc': 'debugging test gym archvie'},
             'testgym_news': {
                 'desc': 'debugging test gym news'},
+            'GUEST': { # XXX remove after prototyping
+                'desc': 'test bag for guest user'},
             }
         }

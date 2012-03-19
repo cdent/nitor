@@ -18,10 +18,11 @@ from tiddlyweb.model.tiddler import Tiddler, current_timestring
 from tiddlyweb.store import StoreError
 from tiddlyweb.util import merge_config
 from tiddlyweb.web.http import HTTP303, HTTP400
-from tiddlyweb.web.util import get_route_value, server_base_url
+from tiddlyweb.web.util import get_route_value, server_base_url, encode_name
 from tiddlyweb.wikitext import render_wikitext
 
-from tiddlywebplugins.utils import replace_handler, do_html, require_role
+from tiddlywebplugins.utils import (replace_handler, do_html, require_role,
+        require_any_user)
 from tiddlywebplugins.nitor.config import config as plugin_config
 from tiddlywebplugins.nitor.template import send_template
 
@@ -31,6 +32,7 @@ __version__ = '0.0.1'
 
 GYMS_BAG = 'gyms'
 CLIMBTYPES = 'climbtypes'
+CLEAN_CLIMB = ['onsight', 'flash', 'redpoint']
 RESERVED_BAGS = [GYMS_BAG, 'common', CLIMBTYPES]
 ROUTE_FIELDS = ['lineNumber', 'colorName', 'grade', 'routeSetter']
 LEAD_FIELD = 'isLeadRoute'
@@ -56,6 +58,7 @@ def admin(environ, start_response):
     return send_template(environ, 'admin.html', { 'gyms': gyms,
         'title': 'Admin Page'})
 
+
 #@require_role('ADMIN)
 @do_html()
 def gym_editor(environ, start_response):
@@ -69,6 +72,7 @@ def gym_editor(environ, start_response):
 
     return send_template(environ, 'gym_editor.html', {'tiddler': tiddler,
         'title': 'Edit Gym %s' % gym})
+
 
 #@require_role('ADMIN')
 def gym_edit(environ, start_response):
@@ -101,6 +105,7 @@ def _update_gym_info(environ, tiddler):
     except StoreError, exc:
         raise HTTP400('Unable to save gym: %s' % exc)
 
+
 def get_gyms(environ, constraint):
     """
     Get the list of bags and fullnames that match
@@ -125,6 +130,7 @@ def get_gyms(environ, constraint):
         except PermissionsError:
             pass
     return kept_bags, fullnames
+
 
 #@require_role('MANAGER')
 @do_html()
@@ -305,11 +311,126 @@ def gym_routes(environ, start_response):
     """
     Display the routes from a single gym.
     """
+    store = environ['tiddlyweb.store']
+    current_user = environ['tiddlyweb.usersign']['name']
     gym = get_route_value(environ, 'gym')
     routes = _get_gym_routes(environ, gym)
+    climbtypes = [tiddler.title for tiddler in
+            store.list_bag_tiddlers(Bag(CLIMBTYPES))]
+    if current_user:# != 'GUEST':
+        search_query = 'bag:%s tag:climb gym:%s _limit:%s' % (current_user,
+                gym, len(routes))
+        recent_climbs = dict([(tiddler.title, store.get(tiddler))
+            for tiddler in store.search(search_query)])
+        search_query = 'bag:%s tag:tickwish gym:%s _limit:%s' % (current_user,
+                gym, len(routes))
+        wished_climbs = [tiddler.title for tiddler in store.search(search_query)]
+        for route in routes:
+            if route.title in recent_climbs:
+                route.fields['climbtype'] = recent_climbs[
+                        route.title].fields['climbtype']
+            if route.title in wished_climbs:
+                route.fields['do'] = True
+
     return send_template(environ, 'gym_routes.html', {
+        'gym': gym,
+        'climbtypes': [''] + climbtypes,
         'title': 'Routes @%s' % gym,
         'routes': routes})
+
+
+#@require_any_user()
+@do_html()
+def ticklist(environ, start_response):
+    store = environ['tiddlyweb.store']
+    current_user = environ['tiddlyweb.usersign']['name']
+    gym = get_route_value(environ, 'gym')
+    routes = _get_gym_routes(environ, gym)
+
+    climbtypes = [tiddler.title for tiddler in
+            store.list_bag_tiddlers(Bag(CLIMBTYPES))]
+
+    search_query = 'bag:%s tag:tickwish gym:%s _limit:%s' % (current_user,
+            gym, len(routes))
+    wished_climbs = dict([(tiddler.title, store.get(tiddler))
+        for tiddler in store.search(search_query)])
+    for route in routes:
+        if route.title in wished_climbs:
+            wished_climbs[route.title].fields['do'] = True
+
+    return send_template(environ, 'gym_routes.html', {
+        'gym': gym,
+        'climbtypes': [''] + climbtypes,
+        'title': 'Ticklist for %s@%s' % (current_user, gym),
+        'routes': wished_climbs.values()})
+
+#@require_any_user()
+def record_climbs(environ, start_response):
+    query = environ['tiddlyweb.query']
+    store = environ['tiddlyweb.store']
+    current_user = environ['tiddlyweb.usersign']['name']
+    gym = get_route_value(environ, 'gym')
+
+    routes = query['route']
+    dones = query['doneroute']
+    
+    for index, value in enumerate(dones):
+        if value != '':
+            route_title = routes[index]
+            tiddler = Tiddler(route_title, current_user)
+            try:
+                tiddler = store.get(tiddler)
+            except StoreError:
+                pass
+            if value in CLEAN_CLIMB:
+                try:
+                    tiddler.tags.remove('tickwish')
+                except ValueError:
+                    pass
+            tiddler.fields['climbtype'] = value
+            tiddler.fields['gym'] = gym
+            tiddler.tags.append('climb')
+            store.put(tiddler)
+
+    raise HTTP303(server_base_url(environ) + environ['REQUEST_URI'])
+
+
+#@require_any_user()
+def make_ticklist(environ, start_response):
+    store = environ['tiddlyweb.store']
+    current_user = environ['tiddlyweb.usersign']['name']
+    gym = get_route_value(environ, 'gym')
+    tick_wishes = environ['tiddlyweb.query'].get('addroute', [])
+    routes = _get_gym_routes(environ, gym)
+
+    for route in routes:
+        route.bag = current_user
+        if route.title in tick_wishes:
+            route.tags = ['tickwish']
+            route.fields['gym'] = gym
+            store.put(route)
+        else:
+            try:
+                tiddler = store.get(route)
+                tiddler.tags.remove('tickwish')
+                store.put(tiddler)
+            except (StoreError, ValueError):
+                pass
+
+    raise HTTP303(server_base_url(environ)
+            + '/gyms/%s/ticklist' % encode_name(gym))
+
+
+#@require_any_user()
+@do_html()
+def user_routes_update(environ, start_response):
+    submit = environ['tiddlyweb.query'].get('submit', [None])[0]
+    if submit == 'Manage Ticklist':
+        return make_ticklist(environ, start_response)
+    elif submit == 'Manage Climbs':
+        return record_climbs(environ, start_response)
+    else:
+        raise HTTP400('Bad request for route update')
 
 
 def establish_handlers(config):
@@ -320,7 +441,10 @@ def establish_handlers(config):
     selector.add('/manager', GET=manager)
     selector.add('/manager/{gym:segment}', GET=manage_gym, POST=manage_edit)
     selector.add('/gyms/{gym:segment}', GET=gym_info)
-    selector.add('/gyms/{gym:segment}/routes', GET=gym_routes)
+    selector.add('/gyms/{gym:segment}/routes', GET=gym_routes,
+            POST=user_routes_update)
+    selector.add('/gyms/{gym:segment}/ticklist', GET=ticklist,
+            POST=user_routes_update)
 
 
 def create_gym_bag(environ, bag_name):

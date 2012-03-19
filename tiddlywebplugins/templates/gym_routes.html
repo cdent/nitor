@@ -1,9 +1,26 @@
 {% extends 'base.html' %}
 {% block content %}
+<form method="POST">
 <table>
-    <tr><th>line</th><th>color</th><th>grade</th><th>setter</th><th>lead?</th></tr>
+        <tr><th>do?</th><th>done?<th>line</th><th>color</th><th>grade</th><th>setter</th><th>lead?</th></tr>
     {% for route in routes|sort(attribute='fields.lineNumber') %}
     <tr>
+        <td><input type="checkbox" name="addroute" value="{{
+            route.title }}" {% if route.fields.do
+            %}checked="checked"{% endif %}></td>
+        <td>
+            <input type="hidden" name="route" value="{{route.title}}">
+            <select name="doneroute">
+                {% for ctype in climbtypes|sort %}
+                <option value="{{ ctype }}"
+                {% if route.fields.climbtype == ctype %}
+                selected="selected"
+                {% endif %}
+                >{{ ctype }}</option>
+                {% endfor %}
+            </select>
+        </td>
+
         <td>{{ route.fields.lineNumber }}</td>
         <td>{{ route.fields.colorName }}</td>
         <td>{{ route.fields.grade }}</td>
@@ -12,4 +29,7 @@
     </tr>
     {% endfor %}
 </table>
+<input type="submit" name="submit" value="Manage Ticklist">
+<input type="submit" name="submit" value="Manage Climbs">
+<form>
 {% endblock %}
