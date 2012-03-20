@@ -21,12 +21,16 @@ setup(
     url = 'http://pypi.python.org/pypi/%s' % NAME,
     platforms = 'Posix; MacOS X; Windows',
     packages = find_packages(exclude=['test']),
+    scripts = ['nitor'],
     install_requires = ['setuptools',
         'tiddlyweb',
         'tiddlywebplugins.mysql3',
-        'tiddlywebplugins.templates'
+        'tiddlywebplugins.templates',
         'tiddlywebplugins.markdown',
         'tiddlywebplugins.instancer',
+        'selector<0.9'
         ],
-    zip_safe = False
+    zip_safe = False,
+    include_package_data = True,
+    license = 'BSD',
     )

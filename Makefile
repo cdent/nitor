@@ -12,6 +12,9 @@ clean:
 
 dev: remotes dev_local
 
+dist: clean remotes
+	python setup.py sdist
+
 dev_local:
 	@mysqladmin -f drop nitor || true
 	@mysqladmin create nitor

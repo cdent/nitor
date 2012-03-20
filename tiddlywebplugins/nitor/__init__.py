@@ -448,11 +448,13 @@ def establish_handlers(config):
 
 def create_gym_bag(environ, bag_name):
     store = environ['tiddlyweb.store']
-    bag = Bag(bag_name)
+    news_bag = Bag('%s_news' % bag_name)
+    climbs_bag = Bag('%s_climbs' % bag_name)
     archive_bag = Bag('%s_archive' % bag_name)
     # TODO Set policy appropriately
     #bag.policy.manage ....
-    store.put(bag)
+    store.put(news_bag)
+    store.put(climbs_bag)
     store.put(archive_bag)
 
 
@@ -460,6 +462,7 @@ def init(config):
     import tiddlywebplugins.instancer
 
     merge_config(config, plugin_config)
+
     if 'selector' in config:
         establish_handlers(config)
 
