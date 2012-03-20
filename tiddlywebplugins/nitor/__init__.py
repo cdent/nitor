@@ -170,6 +170,7 @@ def manage_gym(environ, start_response):
         'latest_news': latest_news,
         'routes': routes})
 
+
 def _get_gym_routes(environ, gym_name):
     store = environ['tiddlyweb.store']
     gym_bag = Bag('%s_climbs' % gym_name)
@@ -182,9 +183,8 @@ def _get_gym_routes(environ, gym_name):
             pass  # don't worry
         return tiddler
 
-    return [_get_and_mangle_tiddler(tiddler) for tiddler in filter_tiddlers(
-        store.list_bag_tiddlers(gym_bag),
-        'select=tag:route', environ)]
+    return [_get_and_mangle_tiddler(tiddler) for tiddler
+            in store.list_bag_tiddlers(gym_bag)]
 
 
 #@require_role('MANAGER')
@@ -267,7 +267,6 @@ def _manage_update_routes(environ, gym):
             continue
         new_route = True
         tiddler.fields[key] = value
-    tiddler.tags = ['route']
     if new_route:
         store.put(tiddler)
     raise HTTP303(server_base_url(environ) + '/manager/%s' % gym)

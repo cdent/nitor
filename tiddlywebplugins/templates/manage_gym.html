@@ -39,7 +39,7 @@
         </td>
         <td>
             <input name="isLeadRoute" type="checkbox" value="{{ route.title }}"
-            {%- if route.fields.isLeadRoute -%} checked="checked"{%- endif %}
+            {%- if route.fields.isLeadRoute == '1' -%} checked="checked"{%- endif %}
             />
         </td>
     </tr>

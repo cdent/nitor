@@ -25,7 +25,7 @@
         <td>{{ route.fields.colorName }}</td>
         <td>{{ route.fields.grade }}</td>
         <td>{{ route.fields.routeSetter }}</td>
-        <td>{% if route.fields.isLeadRoute %} X {% endif %}</td>
+        <td>{% if route.fields.isLeadRoute == '1' %} X {% endif %}</td>
     </tr>
     {% endfor %}
 </table>
