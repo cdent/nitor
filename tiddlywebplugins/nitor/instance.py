@@ -48,7 +48,7 @@ store_structure = {
                 'desc': 'maps extracted user credentials',
                 'policy': NONE_POLICY},
             'MAGICUSER': {
-                'desc': 'maps extracted user credentials',
+                'desc': 'store user details',
                 'policy': NONE_POLICY},
             'testgym_climbs': {
                 'desc': 'debugging test gym'},

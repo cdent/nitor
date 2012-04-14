@@ -49,6 +49,9 @@ def home(environ, start_response):
 #@require_role('ADMIN)
 @do_html()
 def admin(environ, start_response):
+    """
+    Present the admin interface.
+    """
     store = environ['tiddlyweb.store']
     gyms = (store.get(tiddler) for
             tiddler in filter_tiddlers(
@@ -62,6 +65,9 @@ def admin(environ, start_response):
 #@require_role('ADMIN)
 @do_html()
 def gym_editor(environ, start_response):
+    """
+    Present the admin editor for a single gym.
+    """
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
     try:
@@ -76,6 +82,9 @@ def gym_editor(environ, start_response):
 
 #@require_role('ADMIN')
 def gym_edit(environ, start_response):
+    """
+    Handle a POSTed gym edit, by an admin.
+    """
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
     if gym in RESERVED_BAGS:
@@ -93,6 +102,9 @@ def gym_edit(environ, start_response):
 
 
 def _update_gym_info(environ, tiddler):
+    """
+    Update the info about single gym.
+    """
     store = environ['tiddlyweb.store']
     query = environ['tiddlyweb.query']
     for key in ['fullname', 'tagline', 'geo.lat', 'geo.long']:
@@ -135,6 +147,9 @@ def get_gyms(environ, constraint):
 #@require_role('MANAGER')
 @do_html()
 def manager(environ, start_response):
+    """
+    Display all the gyms one manager can manage.
+    """
     kept_bags, fullnames = get_gyms(environ, 'manage')
     return send_template(environ, 'manage_list.html', {'gyms': kept_bags,
         'title': 'Your Gyms', 'fullnames': fullnames})
@@ -143,6 +158,9 @@ def manager(environ, start_response):
 #@require_role('MANAGER')
 @do_html()
 def manage_gym(environ, start_response):
+    """
+    Present a gym managers view upon a single gym.
+    """
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
     routes_bag = store.get(Bag('%s_climbs' % gym))
@@ -172,6 +190,10 @@ def manage_gym(environ, start_response):
 
 
 def _get_gym_routes(environ, gym_name):
+    """
+    Get the current routes in a gym, order by the line number,
+    which needs to be translated into an int (from a string).
+    """
     store = environ['tiddlyweb.store']
     gym_bag = Bag('%s_climbs' % gym_name)
 
@@ -190,6 +212,9 @@ def _get_gym_routes(environ, gym_name):
 #@require_role('MANAGER')
 @do_html()
 def manage_edit(environ, start_response):
+    """
+    Handle POSTed data from the gym manager's editor.
+    """
     store = environ['tiddlyweb.store']
     gym = get_route_value(environ, 'gym')
     gym_bag = store.get(Bag('%s_climbs' % gym))
@@ -206,6 +231,9 @@ def manage_edit(environ, start_response):
         return _manage_update_gym(environ, gym)
 
 def _manage_create_news(environ, gym):
+    """
+    Store a newly created news item.
+    """
     store = environ['tiddlyweb.store']
     news = environ['tiddlyweb.query'].get('news', [''])[0]
     tiddler = Tiddler(str(uuid4()), '%s_news' % gym)
@@ -215,6 +243,9 @@ def _manage_create_news(environ, gym):
     raise HTTP303(server_base_url(environ) + '/manager/%s' % gym)
 
 def _manage_update_routes(environ, gym):
+    """
+    Update routes with new information.
+    """
     store = environ['tiddlyweb.store']
     query = environ['tiddlyweb.query']
     existing_titles = query.get('title', [])
@@ -272,6 +303,9 @@ def _manage_update_routes(environ, gym):
     raise HTTP303(server_base_url(environ) + '/manager/%s' % gym)
 
 def _manage_update_gym(environ, gym):
+    """
+    Update the gym information.
+    """
     tiddler = Tiddler(gym, GYMS_BAG)
     _update_gym_info(environ, tiddler)
 
@@ -341,6 +375,9 @@ def gym_routes(environ, start_response):
 #@require_any_user()
 @do_html()
 def ticklist(environ, start_response):
+    """
+    Display a user's own ticklist.
+    """
     store = environ['tiddlyweb.store']
     current_user = environ['tiddlyweb.usersign']['name']
     gym = get_route_value(environ, 'gym')
@@ -363,8 +400,10 @@ def ticklist(environ, start_response):
         'title': 'Ticklist for %s@%s' % (current_user, gym),
         'routes': wished_climbs.values()})
 
-#@require_any_user()
 def record_climbs(environ, start_response):
+    """
+    Record a climb that has been accomplished.
+    """
     query = environ['tiddlyweb.query']
     store = environ['tiddlyweb.store']
     current_user = environ['tiddlyweb.usersign']['name']
@@ -396,6 +435,9 @@ def record_climbs(environ, start_response):
 
 #@require_any_user()
 def make_ticklist(environ, start_response):
+    """
+    Record routes the user would like to climb.
+    """
     store = environ['tiddlyweb.store']
     current_user = environ['tiddlyweb.usersign']['name']
     gym = get_route_value(environ, 'gym')
@@ -423,6 +465,9 @@ def make_ticklist(environ, start_response):
 #@require_any_user()
 @do_html()
 def user_routes_update(environ, start_response):
+    """
+    Handle a user's POSTed ticks or routes.
+    """
     submit = environ['tiddlyweb.query'].get('submit', [None])[0]
     if submit == 'Manage Ticklist':
         return make_ticklist(environ, start_response)
@@ -447,6 +492,9 @@ def establish_handlers(config):
 
 
 def create_gym_bag(environ, bag_name):
+    """
+    Set up the bags used by a gym.
+    """
     store = environ['tiddlyweb.store']
     news_bag = Bag('%s_news' % bag_name)
     climbs_bag = Bag('%s_climbs' % bag_name)
