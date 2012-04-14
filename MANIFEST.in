@@ -1,0 +1,5 @@
+recursive-include test *
+include README Makefile
+include mangler.py tiddlywebconfig.py
+include tiddlywebplugins/templates/*.html
+recursive-include tiddlywebplugins/nitor/resources *
