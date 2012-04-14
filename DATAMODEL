@@ -1,0 +1,35 @@
+
+Some notes on trying to keep track of the data model in nitor, since
+bags are being used in a "special" way.
+
+! Gyms
+
+The bag named 'gyms' contains tiddlers with titles that are the code
+of the gym (e.g. rcc). Each gym gets three bags, using the rcc example:
+
+* rcc_news: each tiddler is a news item
+* rcc_climbs: each tiddler is a record of a current route
+* rcc_archive: each tiddler is a route that is no longer "up"
+
+! Misc
+
+The bag called 'climbtypes' has tiddlers which have title being the
+shorthand of a climb type, with text as the full description.
+
+! Users
+
+Each user gets one bag, into which go tiddlers that have titles that same
+as routes stored in the '_climbs' bags. Something desired to be climbed is
+tagged 'tickwish'. Something climbed is tagged 'climb'. Other fields can be
+used to do things like store comments.
+
+Each user will eventually have a tiddler in the MAGICUSER bag which 
+operates, effectively, as a profile and account settings container.
+
+! Roles
+
+Some users are 'MANAGER', meaning they are responsible for keeping 
+gym data up to date. Some users are 'ADMIN', meaning they can create
+new gyms or update gym info.
+
+
