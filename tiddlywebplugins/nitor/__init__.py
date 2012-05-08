@@ -56,7 +56,6 @@ def get_sidebar(environ, tags=None, users=None, gyms=None):
     if not tags:
         tags =  DEFAULT_SIDEBAR_TAGS
     query = ' OR '.join(['tag:%s' % tag for tag in tags])
-    print query
     return (store.get(tiddler) for tiddler in
             readable_tiddlers_by_bag(store, store.search(query), usersign))
 
