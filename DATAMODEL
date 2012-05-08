@@ -3,6 +3,9 @@ Some notes on trying to keep track of the data model in nitor, since
 bags are being used in a "special" way.
 
 This needs to also record how tags are being used but does not, yet.
+The current code references annotations on climbs by having the same
+title. This will not scale. Annotations need to point to a climb by
+a field which references. Then we can unwind the tree as needed.
 
 ! Gyms
 
