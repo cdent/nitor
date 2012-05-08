@@ -1,9 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>Welcome to Nitor</h1>
+
+<p>DIY mixtape ethical semiotics, chambray letterpress mumblecore
+   locavore freegan street art. Single-origin coffee locavore master
+   cleanse, pinterest godard forage messenger bag gentrify. Pork belly
+   butcher stumptown vice kale chips, bespoke mumblecore hella readymade
+   fanny pack skateboard. Fanny pack whatever before they sold out, echo
+   park mixtape photo booth bicycle rights marfa put a bird on it
+   sustainable four loko mumblecore williamsburg fap. Mumblecore 8-bit
+   aesthetic raw denim american apparel banksy salvia, iphone synth
+   direct trade truffaut. Seitan vegan fap trust fund. Odd future synth
+   skateboard, mixtape butcher ethnic authentic irony.</p>
+
+<p>Squid yr master cleanse post-ironic leggings, iphone letterpress wes
+anderson wayfarers biodiesel sustainable messenger bag truffaut. Tofu
+beard ennui PBR +1, chillwave keffiyeh quinoa whatever portland yr.
+Fixie vice biodiesel, etsy tumblr irony messenger bag semiotics
+scenester terry richardson beard mlkshk skateboard cardigan. Sartorial
+mcsweeney's biodiesel, pickled dreamcatcher single-origin coffee street
+art 3 wolf moon. Pinterest ethnic cosby sweater occupy lomo, forage jean
+shorts terry richardson. Fingerstache yr high life, dreamcatcher
+typewriter 8-bit chillwave chambray wayfarers. Ennui bushwick locavore
+marfa aesthetic.</p>
+
 <ul>
 {% for gym in gyms %}
-<li><a href="/gyms/{{ gym.name | replace('_climbs', '') | uri }}">{{ gym.name | replace('_climbs', '') | e }}</a>: {{ fullnames[gym.name]|e }}</li>
+<li><a href="/gyms/{{ gym | uri }}">{{ gym | e }}</a>: {{ fullnames[gym]|e }}</li>
 {% endfor %}
 </ul>
 {% endblock %}

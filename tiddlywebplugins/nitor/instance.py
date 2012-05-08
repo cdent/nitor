@@ -29,6 +29,7 @@ instance_config = {
 
 store_contents = {
         'testgym_climbs': ['src/testdata.recipe'],
+        'testgym_news': ['src/testnews.recipe'],
         'common': ['src/common.recipe'],
         'gyms': ['src/gyms.recipe'],
         'climbtypes': ['src/climbtypes.recipe']}

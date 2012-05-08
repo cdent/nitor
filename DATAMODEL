@@ -2,6 +2,8 @@
 Some notes on trying to keep track of the data model in nitor, since
 bags are being used in a "special" way.
 
+This needs to also record how tags are being used but does not, yet.
+
 ! Gyms
 
 The bag named 'gyms' contains tiddlers with titles that are the code

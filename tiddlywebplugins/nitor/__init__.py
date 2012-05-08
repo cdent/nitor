@@ -9,8 +9,10 @@ from __future__ import with_statement, absolute_import, division
 from operator import attrgetter
 from uuid import uuid4
 
+from itertools import ifilter
 
-from tiddlyweb.control import filter_tiddlers
+
+from tiddlyweb.control import filter_tiddlers, readable_tiddlers_by_bag
 from tiddlyweb.manage import make_command
 from tiddlyweb.model.bag import Bag
 from tiddlyweb.model.policy import PermissionsError
@@ -37,13 +39,26 @@ RESERVED_BAGS = [GYMS_BAG, 'common', CLIMBTYPES]
 ROUTE_FIELDS = ['lineNumber', 'colorName', 'grade', 'routeSetter']
 LEAD_FIELD = 'isLeadRoute'
 TIDDLER_TYPE = 'text/x-markdown'
+DEFAULT_SIDEBAR_TAGS = ['news', 'route', 'climb']
 
 
 @do_html()
 def home(environ, start_response):
     kept_bags, fullnames = get_gyms(environ, 'read')
     return send_template(environ, 'home.html', { 'gyms': kept_bags,
-        'fullnames': fullnames, 'title': 'Welcome to Nitor'})
+        'fullnames': fullnames, 'title': 'Welcome to Nitor',
+        'sidebar_info': get_sidebar(environ)})
+
+
+def get_sidebar(environ, tags=None, users=None, gyms=None):
+    store = environ['tiddlyweb.store']
+    usersign = environ['tiddlyweb.usersign']
+    if not tags:
+        tags =  DEFAULT_SIDEBAR_TAGS
+    query = ' OR '.join(['tag:%s' % tag for tag in tags])
+    print query
+    return (store.get(tiddler) for tiddler in
+            readable_tiddlers_by_bag(store, store.search(query), usersign))
 
 
 #@require_role('ADMIN)
@@ -125,18 +140,19 @@ def get_gyms(environ, constraint):
     """
     store = environ['tiddlyweb.store']
     usersign = environ['tiddlyweb.usersign']
-    bags = (store.get(bag) for bag in store.list_bags())
+    bags = (store.get(climb_bag) for climb_bag in sorted(
+        (bag for bag in store.list_bags() if bag.name.endswith('_climbs')),
+        key=attrgetter('name')))
     kept_bags = []
     fullnames = {}
-    for bag in sorted(bags, key=attrgetter('name')):
-        if not bag.name.endswith('_climbs'):
-            continue
+    for bag in bags:
         try:
             bag.policy.allows(usersign, constraint)
-            kept_bags.append(bag)
+            bag_name = bag.name.replace('_climbs', '')
+            kept_bags.append(bag_name)
             try:
-                tiddler = store.get(Tiddler(bag.name, GYMS_BAG))
-                fullnames[bag.name] = tiddler.fields['fullname']
+                tiddler = store.get(Tiddler(bag_name, GYMS_BAG))
+                fullnames[bag_name] = tiddler.fields['fullname']
             except StoreError:
                 pass
         except PermissionsError:

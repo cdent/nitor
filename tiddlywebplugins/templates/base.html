@@ -15,6 +15,26 @@
     </head>
     <body>
         <div id="container">
+            <div id="sidebar">
+                {% block sidebar %}
+                <ul>
+                    {% for item in sidebar_info %}
+                    <li>
+                    {% if 'climb' in item.tags %}
+                    {{item.bag}} climbed an {{item.fields.grade}}
+                    at {{item.fields.gym}}
+                    {% elif 'route' in item.tags %}
+                    A {{item.fields.grade}} has been added at
+                    {{item.bag.replace('_climbs', '')}}
+                    {% elif 'news' in item.tags %}
+                    {{item.bag.replace('_news', '')}} has some news:
+                    {{item.text[0:10]}}
+                    {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endblock %}
+            </div>
           {% block content %}
           {% endblock %}
         </div>
