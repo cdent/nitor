@@ -10,6 +10,7 @@ from operator import attrgetter
 from uuid import uuid4
 
 from itertools import ifilter
+from httpexceptor import HTTP303, HTTP400
 
 
 from tiddlyweb.control import filter_tiddlers, readable_tiddlers_by_bag
@@ -19,7 +20,6 @@ from tiddlyweb.model.policy import PermissionsError
 from tiddlyweb.model.tiddler import Tiddler, current_timestring
 from tiddlyweb.store import StoreError
 from tiddlyweb.util import merge_config
-from tiddlyweb.web.http import HTTP303, HTTP400
 from tiddlyweb.web.util import get_route_value, server_base_url, encode_name
 from tiddlyweb.wikitext import render_wikitext
 
